@@ -15,4 +15,9 @@ class Oui extends Model
         'organization_name',
         'organization_address',
     ];
+
+    public function getOrganizationName()
+    {
+        return $this->organization_name ?? 'Vendor not found';
+    }
 }

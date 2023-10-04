@@ -19,3 +19,4 @@ Route::get('/', function () {
 
 // MAC Lookup Routes
 Route::get('/lookup/{mac}', [JsonApiController::class, 'lookupSingleMac']);
+Route::post('/lookup', [JsonApiController::class, 'lookupMultipleMacs']);
