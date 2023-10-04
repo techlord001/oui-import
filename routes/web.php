@@ -16,3 +16,6 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function () {
     return view('welcome');
 });
+
+// MAC Lookup Routes
+Route::get('/lookup/{mac}', [JsonApiController::class, 'lookupSingleMac']);
