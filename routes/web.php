@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\JsonApiController;
 use Illuminate\Support\Facades\Route;
 
 /*

@@ -1,66 +1,63 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# OUI Import Project
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+This project aims to import the latest version of the OUI (Organizationally Unique Identifier) data into a database and provides a JSON API for looking up vendor information based on MAC addresses.
 
-## About Laravel
+I did run into some issues try to parse the CSV file, specifically any cells that had multiple escaped lines (seemed to only be the addresses). Didn't have time to resolve that.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## Files and Components
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Models
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+#### Oui.php
+Defines the Eloquent model for the `ouis` table, representing OUI data. It includes fillable fields and a method to retrieve the organization name.
 
-## Learning Laravel
+### Controllers
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+#### JsonApiController.php
+Implements two methods for MAC address lookup – one for a single MAC (`lookupSingleMac`) and another for multiple MACs (`lookupMultipleMacs`). It includes methods for normalizing MAC addresses and looking up vendors based on OUI data.
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Commands
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains over 2000 video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+#### ImportOuiData.php
+A custom Artisan command (`import:oui-data`) to import the latest OUI data from the provided URL into the database. It utilizes Laravel's HTTP client to fetch the CSV data and populates the `ouis` table.
 
-## Laravel Sponsors
+### Routes
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the Laravel [Patreon page](https://patreon.com/taylorotwell).
+#### web.php
+Defines lookup routes, specifically GET for single and POST for multiple MAC address lookups. Routes are mapped to methods in the `JsonApiController` controller.
 
-### Premium Partners
+### Middleware
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Cubet Techno Labs](https://cubettech.com)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[Many](https://www.many.co.uk)**
-- **[Webdock, Fast VPS Hosting](https://www.webdock.io/en)**
-- **[DevSquad](https://devsquad.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[OP.GG](https://op.gg)**
-- **[WebReinvent](https://webreinvent.com/?utm_source=laravel&utm_medium=github&utm_campaign=patreon-sponsors)**
-- **[Lendio](https://lendio.com)**
+#### VerifyCsrfToken.php
+Excludes the `/lookup` route from CSRF protection, as the MAC lookup API is intended for external use, and CSRF tokens are not applicable in this context.
 
-## Contributing
+### Console Kernel
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+#### Kernel.php
+Automatic import of OUI data twice daily using the `import:oui-data` Artisan command.
 
-## Code of Conduct
+### Migrations
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+#### create_ouis_table.php
+Defines the migration for creating the `ouis` table with fields such as `registry`, `assignment`, `organization_name`, `organization_address`, and timestamps.
 
-## Security Vulnerabilities
+## Usage
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+1. **Migrate Database:** Run `php artisan migrate` to create the required database table.
 
-## License
+2. **Import OUI Data:** Execute `php artisan import:oui-data` to import the latest OUI data into the database.
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+3. **MAC Lookup API:**
+   - Single MAC lookup (GET): `/lookup/{mac}`
+   - Multiple MAC lookups (POST): `/lookup`
+
+## Schedule Import
+
+The `import:oui-data` command is scheduled to run twice daily to keep the OUI data up to date.
+
+## Notes
+
+- Handles MAC randomization and different MAC address separators.
+- The `normaliseMac` method ensures consistent formatting of MAC addresses.
+- CSRF protection is excluded for the `/lookup` route.
+- Provides a JSON API for MAC address lookups, returning vendor information based on the imported OUI data.
